@@ -1,10 +1,11 @@
 ﻿using log4net;
 using log4net.Config;
-using Newtonsoft.Json;
+using SmartControl.Management;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace SmartControl
@@ -12,62 +13,83 @@ namespace SmartControl
     class Program
     {
         private static string CONFIG_FILE = "SmartControlConfigs.json";
-        private static ServerConfiguration[] serverConfigs;
         public static ILog Logger { get; private set; } =  LogManager.GetLogger("SMRTCNTRL");
-
-        private static void LoadConfigs()
-        {
-            Logger.Info("Loading server configurations...");
-            if (!File.Exists(CONFIG_FILE))
-                throw new FileNotFoundException("Couldn't load configs", CONFIG_FILE);
-
-            using (var reader = new StreamReader(CONFIG_FILE))
-            {
-                Logger.Info("Parsing server configurations...");
-                serverConfigs = (ServerConfiguration[])new JsonSerializer().Deserialize(reader, typeof(ServerConfiguration[]));
-            }
-        }
-
-        private static void CreateConfigs()
-        {
-            Logger.Info("Creating sample configuration files...");
-
-            var cfg = new ServerConfiguration();
-            cfg.Name = "SampleConfiguration";
-            cfg.FilePath = "/some/path";
-            cfg.WorkingDirectory = "/some/directory";
-            cfg.Arguments = "-a -r -g -s";
-            
-            var cfgs = new ServerConfiguration[] { cfg};
-            using (var writer = new StreamWriter(CONFIG_FILE))
-                new JsonSerializer() { Formatting = Formatting.Indented }.Serialize(writer, cfgs);
-        }
+        public static ServerManager Manager { get; private set; }
 
         static void Main(string[] args)
         {
+#pragma warning disable CS0618 // Typ oder Element ist veraltet
             DOMConfigurator.Configure();
-            try
-            {
-                Logger.Info("Logger initialized!");
+#pragma warning restore CS0618 // Typ oder Element ist veraltet
 
-                LoadConfigs();
+            Program.Logger.Info("Logger initialized!");
 
-                Logger.Info(string.Format("Loaded {0} config(s):", serverConfigs.Length));
+            Program.Logger.Debug(string.Format("Args[{0}]: {1}", args.Length, args.Length > 0 ? string.Join(", ", args.Select(x => "\"" + x + "\"").ToArray()) : "<none>"));
+            string name = "";
+            Mode mode = Mode.Start;
 
-                foreach (var config in serverConfigs)
-                    Logger.Info(string.Format("\tLoaded configuration \"{0}\"", config.Name));
-            }
-            catch (FileNotFoundException ex)
+            if (args.Length == 1 && args[0].StartsWith("-"))
             {
-                Logger.Error("You're missing the configuration-file", ex);
-                CreateConfigs();
+                switch (args[0])
+                {
+                    case "--help":
+                    case "-h":
+                        PrintUsage();
+                        break;
+                    case "--version":
+                    case "-v":
+                        var a = Assembly.GetExecutingAssembly();
+                        Console.WriteLine("{0} v{1}\n", a.GetName().Name, a.GetName().Version);
+                        break;
+                    case "--list":
+                    case "-l":
+                        Manager = new ServerManager(CONFIG_FILE);
+                        foreach (var cfg in Manager.Configurations)
+                            Console.WriteLine("\t{0}", cfg);
+                        break;
+                    default:
+                        break;
+                }
+                return;
             }
-            catch (Exception ex)
+            if (args.Length != 2)
             {
-                Logger.Error("SmartControl crashed", ex);
+                Program.Logger.Error("Expected 2 arguments");
+                return;
             }
-            Logger.Info("Exiting...");
-            Console.ReadKey();
+            else
+            {
+                name = args[1];
+                if (!Enum.TryParse(args[0], out mode))
+                {
+                    Program.Logger.Error("Invalid mode \"" + args[0] + "\"");
+                    return;
+                }
+            }
+
+            Manager = new ServerManager(CONFIG_FILE);
+            Manager.Update();
+            Manager.Handle(name, mode);
+
+            Program.Logger.Info("Exiting...");
+        }
+
+        private static void PrintUsage()
+        {
+            StringBuilder b = new StringBuilder();
+            b.AppendLine("Use: SmartControl MODE NAME");
+            b.AppendLine(" or: SmartControl MODE all");
+            b.AppendLine();
+            b.AppendLine("Modes:");
+            b.AppendLine("start\tStarts a configuration");
+            b.AppendLine("stop\tStops a configuration");
+            b.AppendLine("restart\tRestarts a configuration");
+            b.AppendLine();
+            b.AppendLine("NAME: The name of the configuration to handle (or \"all\" for all available configurations)");
+            b.AppendLine();
+            b.AppendLine("Example: SmartControl start NanoDemo");
+            b.AppendLine("*DUH*");
+            Console.WriteLine(b.ToString());
         }
     }
 }
