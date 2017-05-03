@@ -1,5 +1,6 @@
 # SmartControl
 SmartControl allows for easy automation of `screen`-instances and is meant to make setting up screen for (game-)servers easy. Simply add a configuration for each server you'd like to automate and you're good to go!
+**Note:** This started as a personal project for a specific need which is why it is lacking some sanity-checks and doesn't come with code-documentation *yet*. 
 
 ## Features
 * ServerConfiguration lets you specify both basic information about servers as well as commands to send to them on startup or shutdown
@@ -14,6 +15,8 @@ Also, there are some basic commands:
 * `-h` or `--help`: Print usage
 * `-v` or `--version`: Print current version
 * `-l` or `--list`: Print current configurations
+
+Adding configurations is done by adding new entries to the `serverconfigurations`-Array in the config-file, as shown [here](#example).
 
 ## Requirements
 * mono, runtime-version 4.0
@@ -42,19 +45,19 @@ Setting up a minecraft-server is rather simple with this tool. Since minecraft-s
   ]
 }
 ```
-  * Name: This name will be used for both automation and screen-names.
-  * RestartDelay: Seconds between stopping and starting the server back up again.
-  * AllowMultipleInstances: Whether or not to allow for spawning multiple instances.
+  * `Name`: This name will be used for both automation and screen-names.
+  * `RestartDelay`: Seconds between stopping and starting the server back up again.
+  * `AllowMultipleInstances`: Whether or not to allow for spawning multiple instances.
     * We don't want to run the gameserver twice in this case.
-  * FilePath: The path of the program to execute.
+  * `FilePath`: The path of the program to execute.
     * We'll let sh interpret the given script-file.
-  * WorkingDirectory: The directory to execute the program in.
+  * `WorkingDirectory`: The directory to execute the program in.
     * Make sure this is the gameserver's root-directory.
-  * Arguments: Arguments you want to pass to the program.
+  * `Arguments`: Arguments you want to pass to the program.
     * Since we want to have sh interpret the script, pass the script-file.
-  * SendOnStop: An array of messages that are sent to the screen-instance after starting it up.
+  * `SendOnStop`: An array of messages that are sent to the screen-instance after starting it up.
     * We don't need to supply anything upon startup.
-  * SendOnStop: An array of messages that are sent to the screen-instance to shut it down.
+  * `SendOnStop`: An array of messages that are sent to the screen-instance to shut it down.
     * In order to stop the server, make sure that the current input-buffer is cleared (`^M`/`Enter`), save the gamestate (`save-all^M`) and halt the server (`stop^M`).
 * Run `mono SmartControl.exe Start Minecraft` to start up the gameserver, `mono SmartControl.exe Stop Minecraft` will stop it.
 * You're good to go! :sparkles:
