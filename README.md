@@ -1,5 +1,6 @@
 # SmartControl
 SmartControl allows for easy automation of `screen`-instances and is meant to make setting up screen for (game-)servers easy. Simply add a configuration for each server you'd like to automate and you're good to go!
+
 **Note:** This started as a personal project for a specific need which is why it is lacking some sanity-checks and doesn't come with code-documentation *yet*. 
 
 ## Features
