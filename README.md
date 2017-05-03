@@ -21,6 +21,7 @@ Adding configurations is done by adding new entries to the `serverconfigurations
 
 ## Requirements
 * mono, runtime-version 4.0
+* screen
 
 ## Example
 Setting up a minecraft-server is rather simple with this tool. Since minecraft-servers often come with a shell-script, we can simply invoke it:
